@@ -34,8 +34,27 @@ class Track:
         # unassigned measurement transformed from sensor to vehicle coordinates
         # - initialize track state and track score with appropriate values
         ############
+        sen_coord = np.ones((4, 1))
+        sen_coord[:3] = meas.z
+        veh_coord = meas.sensor.sens_to_veh * sen_coord
+        
+        self.x = np.matrix([[veh_coord[0, 0]],
+                        [ veh_coord[1,0]],
+                        [ veh_coord[2,0]],
+                        [ 0.        ],
+                        [ 0.        ],
+                        [ 0.        ]])
 
-        self.x = np.matrix([[49.53980697],
+        P_pos = M_rot * meas.R * M_rot.transpose()
+        P_vel = np.matrix([
+            [params.sigma_p44**2, 0, 0],
+            [0, params.sigma_p55**2, 0],
+            [0, 0, params.sigma_p66**2]
+        ])
+        self.P = np.zeros((6, 6))
+        self.P[:3,:3] = P_pos
+        self.P[3:,3:] = P_vel
+        """self.x = np.matrix([[49.53980697],
                         [ 3.41006279],
                         [ 0.91790581],
                         [ 0.        ],
@@ -46,10 +65,10 @@ class Track:
                         [0.0e+00, 0.0e+00, 6.4e-03, 0.0e+00, 0.0e+00, 0.0e+00],
                         [0.0e+00, 0.0e+00, 0.0e+00, 2.5e+03, 0.0e+00, 0.0e+00],
                         [0.0e+00, 0.0e+00, 0.0e+00, 0.0e+00, 2.5e+03, 0.0e+00],
-                        [0.0e+00, 0.0e+00, 0.0e+00, 0.0e+00, 0.0e+00, 2.5e+01]])
-        self.state = 'confirmed'
-        self.score = 0
-        
+                        [0.0e+00, 0.0e+00, 0.0e+00, 0.0e+00, 0.0e+00, 2.5e+01]])"""
+        self.state = 'initialised'
+        self.score = 1./params.window
+
         ############
         # END student code
         ############ 
@@ -107,10 +126,18 @@ class Trackmanagement:
             if meas_list: # if not empty
                 if meas_list[0].sensor.in_fov(track.x):
                     # your code goes here
-                    pass 
+                    track.score -= 1./params.window
 
         # delete old tracks   
+        tracks_to_be_deleted = []
+        for i in unassigned_tracks:
+            track = self.track_list[i]
 
+            if (track.state == "initialised" and track.score < params.delete_threshold) or (track.state == "tentative" and track.score < 0.3) or (track.state == "confirmed" and track.score < params.delete_threshold) or (track.P[0,0]>params.max_P) or (track.P[1,1]>params.max_P):
+                tracks_to_be_deleted.append(track)
+        
+        for track in tracks_to_be_deleted:
+                self.delete_track(track)
         ############
         # END student code
         ############ 
@@ -140,8 +167,12 @@ class Trackmanagement:
         # - set track state to 'tentative' or 'confirmed'
         ############
 
-        pass
-        
+        track.score +=1./params.window
+        track.score = min(track.score, 1)
+        if track.score > 0.3 and track.state == 'initialised':
+            track.state = 'tentative'
+        elif track.score > params.confirmed_threshold and track.state == 'tentative':
+            track.state = 'confirmed'
         ############
         # END student code
         ############ 
