@@ -7,6 +7,8 @@ For data association, I applied a gating technique combined with a nearest-neigh
 
 In theory, fusing LiDAR and camera data leverages the complementary strengths of both sensors—LiDAR provides precise range and geometric information, while the camera contributes rich texture and semantic details. This combination enhances robustness under varying conditions, such as low light, where LiDAR remains reliable, and long-range detection, where the camera can resolve smaller, distant objects. In practice, this fusion led to noticeably improved object classification in the project, enabling clearer distinctions between pedestrians, cyclists, and vehicles. It also contributed to better track continuity, especially in cases where one sensor experienced occlusion or limited coverage.
 
+<img src="img/tracking_filter.PNG"/>
+
 <img src="img/tracking1.PNG"/>
 
 ## Challenges in Real-Life Scenarios
@@ -21,5 +23,7 @@ In theory, fusing LiDAR and camera data leverages the complementary strengths of
 - Incorporate temporal smoothing using motion priors or trajectory prediction.
 - Fuse with additional sensors for redundancy and robustness
 
+<img src="img/graph_filter.PNG"/>
+<img src="img/graph_track.PNG"/>
 <img src="img/graph1.PNG"/>
 
